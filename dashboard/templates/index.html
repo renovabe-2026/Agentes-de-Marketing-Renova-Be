@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Renova Be – Dashboard de Marketing</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">✦</span>
+    <span class="logo-text">Renova<strong>Be</strong></span>
+  </div>
+
+  <ul class="sidebar-nav">
+    <li><a href="#overview" class="nav-link active" data-section="overview">
+      <span class="nav-icon">◈</span> Visão Geral
+    </a></li>
+    <li><a href="#facebook" class="nav-link" data-section="facebook">
+      <span class="nav-icon">◉</span> Facebook Ads
+    </a></li>
+    <li><a href="#google" class="nav-link" data-section="google">
+      <span class="nav-icon">◉</span> Google Ads
+    </a></li>
+    <li><a href="#ga4" class="nav-link" data-section="ga4">
+      <span class="nav-icon">◉</span> GA4
+    </a></li>
+    <li><a href="#shopify" class="nav-link" data-section="shopify">
+      <span class="nav-icon">◉</span> Shopify
+    </a></li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <div id="refresh-status" class="refresh-badge">
+      <span class="pulse-dot"></span>
+      <span id="refresh-label">Ao vivo</span>
+    </div>
+    <div id="last-updated" class="last-updated">–</div>
+  </div>
+</nav>
+
+<!-- ── MAIN CONTENT ── -->
+<main class="main">
+
+  <!-- Header -->
+  <header class="top-header">
+    <div>
+      <h1 id="section-title">Visão Geral</h1>
+      <p id="period-label" class="period-label">Carregando...</p>
+    </div>
+
+    <div class="header-controls">
+      <!-- Date range presets -->
+      <div class="date-presets">
+        <button class="preset-btn active" data-days="7">7d</button>
+        <button class="preset-btn" data-days="14">14d</button>
+        <button class="preset-btn" data-days="30">30d</button>
+        <button class="preset-btn" data-days="90">90d</button>
+      </div>
+
+      <!-- Custom date range -->
+      <div class="date-range">
+        <input type="date" id="date-from" class="date-input" />
+        <span>→</span>
+        <input type="date" id="date-to" class="date-input" />
+        <button id="apply-dates" class="apply-btn">Aplicar</button>
+      </div>
+
+      <!-- Refresh -->
+      <button id="refresh-btn" class="icon-btn" title="Atualizar agora">↻</button>
+    </div>
+  </header>
+
+  <!-- Error banner -->
+  <div id="error-banner" class="error-banner hidden"></div>
+
+  <!-- ── SEÇÃO: VISÃO GERAL ── -->
+  <section id="section-overview" class="section active">
+
+    <!-- KPI Cards row -->
+    <div class="kpi-grid">
+      <div class="kpi-card accent-green">
+        <div class="kpi-label">Receita Total</div>
+        <div class="kpi-value" id="kpi-revenue">–</div>
+        <div class="kpi-sub">Shopify</div>
+      </div>
+      <div class="kpi-card accent-purple">
+        <div class="kpi-label">Investimento Total</div>
+        <div class="kpi-value" id="kpi-spend">–</div>
+        <div class="kpi-sub">Meta + Google</div>
+      </div>
+      <div class="kpi-card accent-gold">
+        <div class="kpi-label">ROAS Global</div>
+        <div class="kpi-value" id="kpi-roas">–</div>
+        <div class="kpi-sub">Receita / Investimento</div>
+      </div>
+      <div class="kpi-card accent-blue">
+        <div class="kpi-label">Pedidos</div>
+        <div class="kpi-value" id="kpi-orders">–</div>
+        <div class="kpi-sub">Ticket médio: <span id="kpi-aov">–</span></div>
+      </div>
+      <div class="kpi-card accent-teal">
+        <div class="kpi-label">Sessões</div>
+        <div class="kpi-value" id="kpi-sessions">–</div>
+        <div class="kpi-sub">GA4</div>
+      </div>
+      <div class="kpi-card accent-pink">
+        <div class="kpi-label">Novos Usuários</div>
+        <div class="kpi-value" id="kpi-new-users">–</div>
+        <div class="kpi-sub">GA4</div>
+      </div>
+      <div class="kpi-card accent-orange">
+        <div class="kpi-label">CAC</div>
+        <div class="kpi-value" id="kpi-cac">–</div>
+        <div class="kpi-sub">Custo por pedido</div>
+      </div>
+    </div>
+
+    <!-- Channel comparison -->
+    <div class="charts-row">
+      <div class="chart-card half">
+        <h3>Investimento por Canal</h3>
+        <canvas id="chart-channel-spend"></canvas>
+      </div>
+      <div class="chart-card half">
+        <h3>ROAS por Canal</h3>
+        <canvas id="chart-channel-roas"></canvas>
+      </div>
+    </div>
+
+    <!-- Channel detail mini-cards -->
+    <div class="channel-cards">
+      <!-- Facebook -->
+      <div class="channel-card">
+        <div class="channel-header channel-fb">
+          <span>Facebook Ads</span>
+          <span class="channel-badge" id="fb-roas-badge">ROAS –</span>
+        </div>
+        <div class="channel-metrics">
+          <div class="cm"><span>Invest.</span><strong id="ov-fb-spend">–</strong></div>
+          <div class="cm"><span>Cliques</span><strong id="ov-fb-clicks">–</strong></div>
+          <div class="cm"><span>CTR</span><strong id="ov-fb-ctr">–</strong></div>
+          <div class="cm"><span>CPA</span><strong id="ov-fb-cpa">–</strong></div>
+        </div>
+      </div>
+      <!-- Google -->
+      <div class="channel-card">
+        <div class="channel-header channel-gg">
+          <span>Google Ads</span>
+          <span class="channel-badge" id="gg-roas-badge">ROAS –</span>
+        </div>
+        <div class="channel-metrics">
+          <div class="cm"><span>Invest.</span><strong id="ov-gg-spend">–</strong></div>
+          <div class="cm"><span>Cliques</span><strong id="ov-gg-clicks">–</strong></div>
+          <div class="cm"><span>CTR</span><strong id="ov-gg-ctr">–</strong></div>
+          <div class="cm"><span>CPA</span><strong id="ov-gg-cpa">–</strong></div>
+        </div>
+      </div>
+      <!-- Shopify -->
+      <div class="channel-card">
+        <div class="channel-header channel-sh">
+          <span>Shopify</span>
+          <span class="channel-badge" id="sh-conv-badge">Conv. –</span>
+        </div>
+        <div class="channel-metrics">
+          <div class="cm"><span>Receita</span><strong id="ov-sh-revenue">–</strong></div>
+          <div class="cm"><span>Pedidos</span><strong id="ov-sh-orders">–</strong></div>
+          <div class="cm"><span>Ticket Médio</span><strong id="ov-sh-aov">–</strong></div>
+          <div class="cm"><span>Novos Clientes</span><strong id="ov-sh-new">–</strong></div>
+        </div>
+      </div>
+      <!-- GA4 -->
+      <div class="channel-card">
+        <div class="channel-header channel-ga">
+          <span>GA4</span>
+          <span class="channel-badge" id="ga-cr-badge">CR –</span>
+        </div>
+        <div class="channel-metrics">
+          <div class="cm"><span>Sessões</span><strong id="ov-ga-sessions">–</strong></div>
+          <div class="cm"><span>Usuários</span><strong id="ov-ga-users">–</strong></div>
+          <div class="cm"><span>Novos</span><strong id="ov-ga-new">–</strong></div>
+          <div class="cm"><span>Conversões</span><strong id="ov-ga-conv">–</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── SEÇÃO: FACEBOOK ADS ── -->
+  <section id="section-facebook" class="section">
+    <div class="kpi-grid kpi-5">
+      <div class="kpi-card accent-purple"><div class="kpi-label">Investimento</div><div class="kpi-value" id="fb-spend">–</div></div>
+      <div class="kpi-card accent-gold"><div class="kpi-label">ROAS</div><div class="kpi-value" id="fb-roas">–</div></div>
+      <div class="kpi-card accent-blue"><div class="kpi-label">Conversões</div><div class="kpi-value" id="fb-conversions">–</div></div>
+      <div class="kpi-card accent-teal"><div class="kpi-label">CTR</div><div class="kpi-value" id="fb-ctr">–</div></div>
+      <div class="kpi-card accent-pink"><div class="kpi-label">CPA</div><div class="kpi-value" id="fb-cpa">–</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card two-thirds">
+        <h3>Investimento vs. Receita — Diário</h3>
+        <canvas id="chart-fb-daily"></canvas>
+      </div>
+      <div class="chart-card one-third">
+        <h3>Campanhas por Investimento</h3>
+        <canvas id="chart-fb-campaigns"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>Campanhas</h3>
+      <div class="table-wrap">
+        <table id="table-fb-campaigns" class="data-table">
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Investimento</th>
+              <th>Impressões</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>CPC</th>
+              <th>Conversões</th>
+              <th>Receita</th>
+              <th>ROAS</th>
+            </tr>
+          </thead>
+          <tbody id="fb-campaigns-body">
+            <tr><td colspan="9" class="loading-row">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEÇÃO: GOOGLE ADS ── -->
+  <section id="section-google" class="section">
+    <div class="kpi-grid kpi-5">
+      <div class="kpi-card accent-purple"><div class="kpi-label">Investimento</div><div class="kpi-value" id="gg-spend">–</div></div>
+      <div class="kpi-card accent-gold"><div class="kpi-label">ROAS</div><div class="kpi-value" id="gg-roas">–</div></div>
+      <div class="kpi-card accent-blue"><div class="kpi-label">Conversões</div><div class="kpi-value" id="gg-conversions">–</div></div>
+      <div class="kpi-card accent-teal"><div class="kpi-label">CTR</div><div class="kpi-value" id="gg-ctr">–</div></div>
+      <div class="kpi-card accent-pink"><div class="kpi-label">CPA</div><div class="kpi-value" id="gg-cpa">–</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card two-thirds">
+        <h3>Investimento vs. Receita — Diário</h3>
+        <canvas id="chart-gg-daily"></canvas>
+      </div>
+      <div class="chart-card one-third">
+        <h3>Campanhas por Investimento</h3>
+        <canvas id="chart-gg-campaigns"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>Campanhas</h3>
+      <div class="table-wrap">
+        <table id="table-gg-campaigns" class="data-table">
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Investimento</th>
+              <th>Impressões</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>CPC</th>
+              <th>Conversões</th>
+              <th>Receita</th>
+              <th>ROAS</th>
+            </tr>
+          </thead>
+          <tbody id="gg-campaigns-body">
+            <tr><td colspan="9" class="loading-row">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEÇÃO: GA4 ── -->
+  <section id="section-ga4" class="section">
+    <div class="kpi-grid kpi-5">
+      <div class="kpi-card accent-teal"><div class="kpi-label">Sessões</div><div class="kpi-value" id="ga4-sessions">–</div></div>
+      <div class="kpi-card accent-blue"><div class="kpi-label">Usuários</div><div class="kpi-value" id="ga4-users">–</div></div>
+      <div class="kpi-card accent-green"><div class="kpi-label">Novos Usuários</div><div class="kpi-value" id="ga4-new-users">–</div></div>
+      <div class="kpi-card accent-gold"><div class="kpi-label">Conversões</div><div class="kpi-value" id="ga4-conversions">–</div></div>
+      <div class="kpi-card accent-pink"><div class="kpi-label">Taxa de Conversão</div><div class="kpi-value" id="ga4-cr">–</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card two-thirds">
+        <h3>Sessões — Diário</h3>
+        <canvas id="chart-ga4-daily"></canvas>
+      </div>
+      <div class="chart-card one-third">
+        <h3>Canais de Tráfego</h3>
+        <canvas id="chart-ga4-channels"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>Canais de Tráfego</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Canal</th>
+              <th>Sessões</th>
+              <th>Usuários</th>
+              <th>Conversões</th>
+            </tr>
+          </thead>
+          <tbody id="ga4-channels-body">
+            <tr><td colspan="4" class="loading-row">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEÇÃO: SHOPIFY ── -->
+  <section id="section-shopify" class="section">
+    <div class="kpi-grid kpi-5">
+      <div class="kpi-card accent-green"><div class="kpi-label">Receita</div><div class="kpi-value" id="sh-revenue">–</div></div>
+      <div class="kpi-card accent-blue"><div class="kpi-label">Pedidos</div><div class="kpi-value" id="sh-orders">–</div></div>
+      <div class="kpi-card accent-gold"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="sh-aov">–</div></div>
+      <div class="kpi-card accent-teal"><div class="kpi-label">Novos Clientes</div><div class="kpi-value" id="sh-new-cust">–</div></div>
+      <div class="kpi-card accent-pink"><div class="kpi-label">Recorrentes</div><div class="kpi-value" id="sh-ret-cust">–</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card half">
+        <h3>Receita — Diária</h3>
+        <canvas id="chart-sh-revenue"></canvas>
+      </div>
+      <div class="chart-card half">
+        <h3>Pedidos — Diários</h3>
+        <canvas id="chart-sh-orders"></canvas>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
